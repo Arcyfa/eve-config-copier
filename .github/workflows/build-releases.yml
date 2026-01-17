@@ -29,12 +29,18 @@ jobs:
     - name: Build Linux executable
       run: |
         version="${{ github.event.inputs.version || github.ref_name }}"
-        ./build_tools/build_for_release.sh "${version}"
+        echo "Building for version: $version"
+        echo "Python version: $(python --version)"
+        echo "Current directory: $(pwd)"
+        echo "Directory contents:"
+        ls -la
+        chmod +x build_tools/build_for_release.sh
+        bash build_tools/build_for_release.sh "${version}"
     - name: Upload Linux artifacts
       uses: actions/upload-artifact@v3
       with:
         name: linux-build
-        path: releases/*.tar.gz
+        path: releases/
 
   build-windows:
     runs-on: windows-latest
@@ -53,12 +59,16 @@ jobs:
       shell: bash
       run: |
         version="${{ github.event.inputs.version || github.ref_name }}"
-        ./build_tools/build_for_release.sh "${version}"
+        echo "Building for version: $version"
+        echo "Python version: $(python --version)"
+        echo "Current directory: $(pwd)"
+        chmod +x build_tools/build_for_release.sh
+        bash build_tools/build_for_release.sh "${version}"
     - name: Upload Windows artifacts
       uses: actions/upload-artifact@v3
       with:
         name: windows-build
-        path: releases/*.zip
+        path: releases/
 
   build-macos:
     runs-on: macos-latest
@@ -76,12 +86,16 @@ jobs:
     - name: Build macOS executable
       run: |
         version="${{ github.event.inputs.version || github.ref_name }}"
-        ./build_tools/build_for_release.sh "${version}"
+        echo "Building for version: $version"
+        echo "Python version: $(python --version)"
+        echo "Current directory: $(pwd)"
+        chmod +x build_tools/build_for_release.sh
+        bash build_tools/build_for_release.sh "${version}"
     - name: Upload macOS artifacts
       uses: actions/upload-artifact@v3
       with:
         name: macos-build
-        path: releases/*.tar.gz
+        path: releases/
 
   commit-builds:
     needs: [build-linux, build-windows, build-macos]

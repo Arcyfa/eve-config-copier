@@ -11,8 +11,8 @@ echo "Building EVE Config Copier for GitHub release..."
 VERSION=${1:-"dev"}
 echo "Building version: $VERSION"
 
-# Check if virtual environment is activated
-if [[ "$VIRTUAL_ENV" == "" ]]; then
+# Check if virtual environment is activated (skip in CI/CD environments)
+if [[ "$VIRTUAL_ENV" == "" && "$CI" == "" && "$GITHUB_ACTIONS" == "" ]]; then
     echo "Warning: Virtual environment not detected. Attempting to activate..."
     if [ -f "../.venv/bin/activate" ]; then
         source ../.venv/bin/activate
@@ -21,9 +21,10 @@ if [[ "$VIRTUAL_ENV" == "" ]]; then
         source ../venv/bin/activate
         echo "Activated virtual environment"
     else
-        echo "No virtual environment found. Please activate manually."
-        exit 1
+        echo "No virtual environment found. Assuming CI/CD environment or global Python."
     fi
+else
+    echo "Using existing Python environment (CI/CD or activated venv)"
 fi
 
 # Navigate to project root
