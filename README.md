@@ -11,9 +11,29 @@ A GUI application for copying EVE Online character settings between profiles and
 - Support for both Tranquility (main) and Singularity (test) servers
 - Character portrait and corporation logo caching
 
-## Quick Start
+## 📦 Download Pre-Built Executables
 
-Quick instructions to run the Qt6 GUI (creates a virtualenv and installs dependencies):
+**🚀 Get the latest release here:** **[Releases Page](https://github.com/Arcyfa/eve-config-copier/releases/latest)**
+
+Choose the appropriate file for your platform:
+- **Windows**: `*windows*.zip` 
+- **Linux**: `*linux*.tar.gz` or `*linux*.zip`
+- **macOS**: `*macos*.tar.gz` or `*macos*.zip`
+
+✅ **No Python installation required** - these are standalone executables!
+
+### Installation from Release:
+1. Download the appropriate file for your platform
+2. Extract the archive to your desired location
+3. Run the executable directly:
+   - **Windows**: Double-click `EVE-Config-Copier.exe`
+   - **Linux/macOS**: Run `./EVE-Config-Copier` from terminal or file manager
+
+## 🛠️ Development Setup
+
+For developers who want to run from source:
+
+### Quick Start
 
 ```bash
 # create venv and install
