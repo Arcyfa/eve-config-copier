@@ -154,12 +154,22 @@ cp requirements.txt "${RELEASES_DIR}/${DIST_NAME}/"
 cp cleanup.sh "${RELEASES_DIR}/${DIST_NAME}/"
 
 # Create release notes
+PLATFORM_TITLE=$(echo "$PLATFORM" | sed 's/./\U&/')  # Capitalize first letter
+
+# Determine executable name
+EXE_NAME="EVE-Config-Copier"
+if [[ "$PLATFORM" == "windows" ]]; then
+    EXE_NAME="EVE-Config-Copier.exe"
+elif [[ "$PLATFORM" == "macos" ]]; then
+    EXE_NAME="EVE-Config-Copier.app"
+fi
+
 cat > "${RELEASES_DIR}/${DIST_NAME}/RELEASE_NOTES.txt" << EOF
 EVE Config Copier v${VERSION}
-Platform: ${PLATFORM^} ${ARCH}
+Platform: ${PLATFORM_TITLE} ${ARCH}
 Build Date: $(date)
 
-This is a standalone executable for ${PLATFORM^} ${ARCH}.
+This is a standalone executable for ${PLATFORM_TITLE} ${ARCH}.
 No Python installation required.
 
 Usage:
@@ -170,7 +180,7 @@ Usage:
 For support and updates: https://github.com/Arcyfa/eve-config-copier
 
 Files included:
-- EVE-Config-Copier${PLATFORM:+$([ "$PLATFORM" = "windows" ] && echo ".exe" || [ "$PLATFORM" = "macos" ] && echo ".app")}
+- ${EXE_NAME}
 - README.md (full documentation)
 - requirements.txt (for reference)
 - cleanup.sh (utility script)
