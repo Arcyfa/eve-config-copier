@@ -12,6 +12,10 @@ on:
         required: true
         default: 'dev'
 
+permissions:
+  contents: write  # Required for creating releases and committing files
+  actions: read    # Required for downloading artifacts
+
 jobs:
   build-linux:
     runs-on: ubuntu-latest
