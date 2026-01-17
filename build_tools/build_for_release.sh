@@ -148,11 +148,6 @@ else
     cp "dist/EVE-Config-Copier" "${RELEASES_DIR}/${DIST_NAME}/"
 fi
 
-# Copy documentation and metadata
-cp README.md "${RELEASES_DIR}/${DIST_NAME}/"
-cp requirements.txt "${RELEASES_DIR}/${DIST_NAME}/"
-cp cleanup.sh "${RELEASES_DIR}/${DIST_NAME}/"
-
 # Create release notes
 PLATFORM_TITLE=$(echo "$PLATFORM" | sed 's/./\U&/')  # Capitalize first letter
 
@@ -180,10 +175,7 @@ Usage:
 For support and updates: https://github.com/Arcyfa/eve-config-copier
 
 Files included:
-- ${EXE_NAME}
-- README.md (full documentation)
-- requirements.txt (for reference)
-- cleanup.sh (utility script)
+- ${EXE_NAME} (main application)
 - RELEASE_NOTES.txt (this file)
 EOF
 
