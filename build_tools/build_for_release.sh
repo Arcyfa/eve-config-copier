@@ -30,9 +30,9 @@ fi
 # Navigate to project root
 cd "$(dirname "$0")/.."
 
-# Install PyInstaller if not present
-echo "Installing/updating PyInstaller..."
-pip install pyinstaller
+# Install PyInstaller and Pillow if not present
+echo "Installing/updating PyInstaller and Pillow..."
+pip install pyinstaller pillow
 
 # Clean previous builds
 echo "Cleaning previous builds..."
@@ -40,18 +40,58 @@ rm -rf build/ dist/
 
 # Build the executable
 echo "Building executable..."
-pyinstaller --onefile \
-    --windowed \
-    --name "EVE-Config-Copier" \
-    --icon="icon.png" \
-    --add-data "icon.png:." \
-    --add-data "README.md:." \
+
+# Check if icon file exists
+ICON_OPTS=""
+if [ -f "icon.png" ]; then
+    echo "Found icon.png - Pillow will convert to platform-specific format"
+    ICON_OPTS="--icon=icon.png"
+else
+    echo "No icon file found - building without icon"
+fi
+
+# Determine platform-specific PyInstaller options
+PYINSTALLER_OPTS="--onefile --name EVE-Config-Copier"
+
+# Platform-specific options
+if [[ "$PLATFORM" == "windows" ]] || [[ "$OS" == "Windows_NT" ]]; then
+    echo "Configuring for Windows build..."
+    PYINSTALLER_OPTS="$PYINSTALLER_OPTS --windowed $ICON_OPTS"
+    # Windows-specific data separator
+    DATA_SEP=";"
+elif [[ "$PLATFORM" == "macos" ]] || [[ "$(uname)" == "Darwin" ]]; then
+    echo "Configuring for macOS build..."  
+    PYINSTALLER_OPTS="$PYINSTALLER_OPTS --windowed $ICON_OPTS"
+    # macOS-specific data separator
+    DATA_SEP=":"
+else
+    echo "Configuring for Linux build..."
+    PYINSTALLER_OPTS="$PYINSTALLER_OPTS $ICON_OPTS"
+    # Linux data separator
+    DATA_SEP=":"
+fi
+
+# Build data file options
+DATA_FILES=""
+if [ -f "icon.png" ]; then
+    DATA_FILES="$DATA_FILES --add-data icon.png${DATA_SEP}."
+fi
+if [ -f "README.md" ]; then
+    DATA_FILES="$DATA_FILES --add-data README.md${DATA_SEP}."
+fi
+
+pyinstaller $PYINSTALLER_OPTS \
+    $DATA_FILES \
     --hidden-import="PySide6.QtCore" \
     --hidden-import="PySide6.QtWidgets" \
     --hidden-import="PySide6.QtGui" \
+    --hidden-import="requests" \
+    --hidden-import="json" \
+    --hidden-import="pathlib" \
     --exclude-module="tkinter" \
     --exclude-module="matplotlib" \
     --exclude-module="numpy" \
+    --exclude-module="pandas" \
     main.py
 
 # Determine platform info
