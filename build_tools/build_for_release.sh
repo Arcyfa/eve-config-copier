@@ -189,15 +189,52 @@ EOF
 
 # Create archive
 cd "${RELEASES_DIR}"
-if command -v zip &> /dev/null; then
-    echo "Creating ZIP archive..."
-    zip -r "${DIST_NAME}.zip" "${DIST_NAME}/"
-    echo "Created: releases/${DIST_NAME}.zip"
-fi
 
-if command -v tar &> /dev/null; then
-    echo "Creating TAR.GZ archive..."
-    tar -czf "${DIST_NAME}.tar.gz" "${DIST_NAME}/"
+# Platform-specific archive creation priority
+if [[ "$PLATFORM" == "windows" ]]; then
+    # Windows: Prioritize ZIP, fallback to TAR.GZ
+    if command -v powershell &> /dev/null; then
+        echo "Creating ZIP archive using PowerShell..."
+        powershell -Command "Compress-Archive -Path '${DIST_NAME}' -DestinationPath '${DIST_NAME}.zip' -Force"
+        echo "Created: releases/${DIST_NAME}.zip"
+    elif command -v zip &> /dev/null; then
+        echo "Creating ZIP archive..."
+        zip -r "${DIST_NAME}.zip" "${DIST_NAME}/"
+        echo "Created: releases/${DIST_NAME}.zip"
+    fi
+    
+    # Also create TAR.GZ as secondary option
+    if command -v tar &> /dev/null; then
+        echo "Creating TAR.GZ archive..."
+        tar -czf "${DIST_NAME}.tar.gz" "${DIST_NAME}/"
+        echo "Created: releases/${DIST_NAME}.tar.gz"
+    fi
+    
+elif [[ "$PLATFORM" == "macos" ]] || [[ "$PLATFORM" == "linux" ]]; then
+    # Unix systems: Create both formats
+    if command -v zip &> /dev/null; then
+        echo "Creating ZIP archive..."
+        zip -r "${DIST_NAME}.zip" "${DIST_NAME}/"
+        echo "Created: releases/${DIST_NAME}.zip"
+    fi
+    
+    if command -v tar &> /dev/null; then
+        echo "Creating TAR.GZ archive..."
+        tar -czf "${DIST_NAME}.tar.gz" "${DIST_NAME}/"
+        echo "Created: releases/${DIST_NAME}.tar.gz"
+    fi
+    
+else
+    # Fallback: Try both if available
+    if command -v zip &> /dev/null; then
+        echo "Creating ZIP archive..."
+        zip -r "${DIST_NAME}.zip" "${DIST_NAME}/"
+        echo "Created: releases/${DIST_NAME}.zip"
+    fi
+
+    if command -v tar &> /dev/null; then
+        echo "Creating TAR.GZ archive..."
+        tar -czf "${DIST_NAME}.tar.gz" "${DIST_NAME}/"
     echo "Created: releases/${DIST_NAME}.tar.gz"
 fi
 
