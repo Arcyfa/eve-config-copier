@@ -41,40 +41,57 @@ rm -rf build/ dist/
 # Build the executable
 echo "Building executable..."
 
-# Check if icon file exists
-ICON_OPTS=""
-if [ -f "icon.png" ]; then
-    echo "Found icon.png - Pillow will convert to platform-specific format"
-    ICON_OPTS="--icon=icon.png"
-else
-    echo "No icon file found - building without icon"
-fi
-
-# Determine platform-specific PyInstaller options
+# Determine platform-specific PyInstaller options and icon
 PYINSTALLER_OPTS="--onefile --name EVE-Config-Copier"
 
 # Platform-specific options
 if [[ "$PLATFORM" == "windows" ]] || [[ "$OS" == "Windows_NT" ]]; then
     echo "Configuring for Windows build..."
-    PYINSTALLER_OPTS="$PYINSTALLER_OPTS --windowed $ICON_OPTS"
+    PYINSTALLER_OPTS="$PYINSTALLER_OPTS --windowed"
     # Windows-specific data separator
     DATA_SEP=";"
+    # Use Windows icon if available
+    if [ -f "icon.ico" ]; then
+        echo "Using Windows icon: icon.ico"
+        PYINSTALLER_OPTS="$PYINSTALLER_OPTS --icon=icon.ico"
+    elif [ -f "icon.png" ]; then
+        echo "Using PNG icon (will convert to ICO): icon.png"
+        PYINSTALLER_OPTS="$PYINSTALLER_OPTS --icon=icon.png"
+    fi
 elif [[ "$PLATFORM" == "macos" ]] || [[ "$(uname)" == "Darwin" ]]; then
     echo "Configuring for macOS build..."  
-    PYINSTALLER_OPTS="$PYINSTALLER_OPTS --windowed $ICON_OPTS"
+    PYINSTALLER_OPTS="$PYINSTALLER_OPTS --windowed"
     # macOS-specific data separator
     DATA_SEP=":"
+    # Use macOS icon if available
+    if [ -f "icon.icns" ]; then
+        echo "Using macOS icon: icon.icns"
+        PYINSTALLER_OPTS="$PYINSTALLER_OPTS --icon=icon.icns"
+    elif [ -f "icon.png" ]; then
+        echo "Using PNG icon (will convert to ICNS): icon.png"
+        PYINSTALLER_OPTS="$PYINSTALLER_OPTS --icon=icon.png"
+    fi
 else
     echo "Configuring for Linux build..."
-    PYINSTALLER_OPTS="$PYINSTALLER_OPTS $ICON_OPTS"
     # Linux data separator
     DATA_SEP=":"
+    # Use any available icon for Linux
+    if [ -f "icon.png" ]; then
+        echo "Using PNG icon: icon.png"
+        PYINSTALLER_OPTS="$PYINSTALLER_OPTS --icon=icon.png"
+    fi
 fi
 
 # Build data file options
 DATA_FILES=""
 if [ -f "icon.png" ]; then
     DATA_FILES="$DATA_FILES --add-data icon.png${DATA_SEP}."
+fi
+if [ -f "icon.ico" ]; then
+    DATA_FILES="$DATA_FILES --add-data icon.ico${DATA_SEP}."
+fi
+if [ -f "icon.icns" ]; then
+    DATA_FILES="$DATA_FILES --add-data icon.icns${DATA_SEP}."
 fi
 if [ -f "README.md" ]; then
     DATA_FILES="$DATA_FILES --add-data README.md${DATA_SEP}."
