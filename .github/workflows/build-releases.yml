@@ -1,0 +1,201 @@
+# GitHub Actions workflow for automated builds
+name: Build Releases
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v1.0.0
+  workflow_dispatch:  # Allows manual triggering
+    inputs:
+      version:
+        description: 'Release version'
+        required: true
+        default: 'dev'
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    - name: Build Linux executable
+      run: |
+        version="${{ github.event.inputs.version || github.ref_name }}"
+        ./build_tools/build_for_release.sh "${version}"
+    - name: Upload Linux artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: linux-build
+        path: releases/*.tar.gz
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    - name: Build Windows executable
+      shell: bash
+      run: |
+        version="${{ github.event.inputs.version || github.ref_name }}"
+        ./build_tools/build_for_release.sh "${version}"
+    - name: Upload Windows artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows-build
+        path: releases/*.zip
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    - name: Build macOS executable
+      run: |
+        version="${{ github.event.inputs.version || github.ref_name }}"
+        ./build_tools/build_for_release.sh "${version}"
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: macos-build
+        path: releases/*.tar.gz
+
+  commit-builds:
+    needs: [build-linux, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+    - name: Organize build files
+      run: |
+        # Create releases directory if it doesn't exist
+        mkdir -p releases
+        
+        # Move all build artifacts to releases folder
+        find . -name "*.zip" -o -name "*.tar.gz" | while read file; do
+          if [[ "$file" != "./releases/"* ]]; then
+            mv "$file" releases/
+          fi
+        done
+        
+        # List what we're committing
+        echo "Build files to commit:"
+        ls -la releases/
+    - name: Commit build files to repository
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Add build files
+        git add releases/*.zip releases/*.tar.gz || true
+        
+        # Check if there are changes to commit
+        if git diff --staged --quiet; then
+          echo "No new build files to commit"
+        else
+          # Get version from tag or input
+          VERSION="${{ github.event.inputs.version || github.ref_name }}"
+          git commit -m "Add release builds for ${VERSION}
+          
+          - Linux x64 build
+          - Windows x64 build  
+          - macOS arm64/x64 build
+          
+          Built by GitHub Actions on $(date)"
+          
+          git push origin HEAD:main
+          echo "Build files committed to repository"
+        fi
+    - name: Upload organized artifacts for release
+      uses: actions/upload-artifact@v3
+      with:
+        name: all-builds
+        path: releases/
+
+  create-release:
+    needs: [build-linux, build-windows, build-macos, commit-builds]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: main  # Get the latest main with committed builds
+    - name: Download organized builds
+      uses: actions/download-artifact@v3
+      with:
+        name: all-builds
+        path: releases/
+    - name: Verify all platform builds exist
+      run: |
+        VERSION="${{ github.ref_name }}"
+        echo "Checking for required build files for ${VERSION}:"
+        
+        LINUX_BUILD=$(find releases/ -name "*linux*" -type f | head -1)
+        WINDOWS_BUILD=$(find releases/ -name "*windows*" -type f | head -1) 
+        MACOS_BUILD=$(find releases/ -name "*macos*" -type f | head -1)
+        
+        echo "Linux build: ${LINUX_BUILD:-MISSING}"
+        echo "Windows build: ${WINDOWS_BUILD:-MISSING}"
+        echo "macOS build: ${MACOS_BUILD:-MISSING}"
+        
+        if [[ -z "$LINUX_BUILD" || -z "$WINDOWS_BUILD" || -z "$MACOS_BUILD" ]]; then
+          echo "❌ ERROR: Not all platform builds are present!"
+          echo "Cannot create release - missing platform builds"
+          exit 1
+        fi
+        
+        echo "✅ All platform builds verified successfully"
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: releases/*
+        generate_release_notes: true
+        name: "EVE Config Copier ${{ github.ref_name }}"
+        body: |
+          ## EVE Config Copier ${{ github.ref_name }}
+          
+          Cross-platform standalone executables for copying EVE Online configurations between characters.
+          
+          ### Downloads Available:
+          - **Linux x64**: `*linux*.tar.gz`
+          - **Windows x64**: `*windows*.zip`  
+          - **macOS**: `*macos*.tar.gz`
+          
+          ### Installation:
+          1. Download the appropriate file for your platform
+          2. Extract the archive
+          3. Run the executable (no Python installation required)
+          
+          ### What's New:
+          See the commit history for detailed changes in this release.
+          
+          **Note**: These are standalone executables - no Python installation required!
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

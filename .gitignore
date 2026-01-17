@@ -130,6 +130,15 @@ logs/*
 # Configuration file with sensitive data
 mappings.json
 
+# Build artifacts
+build/
+dist/
+*.spec
+# Keep release archives in git for distribution
+# releases/*.zip
+# releases/*.tar.gz
+!releases/.gitkeep
+
 # IDE
 .vscode/
 .idea/
