@@ -37,7 +37,7 @@ jobs:
         chmod +x build_tools/build_for_release.sh
         bash build_tools/build_for_release.sh "${version}"
     - name: Upload Linux artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: linux-build
         path: releases/
@@ -65,7 +65,7 @@ jobs:
         chmod +x build_tools/build_for_release.sh
         bash build_tools/build_for_release.sh "${version}"
     - name: Upload Windows artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: windows-build
         path: releases/
@@ -92,7 +92,7 @@ jobs:
         chmod +x build_tools/build_for_release.sh
         bash build_tools/build_for_release.sh "${version}"
     - name: Upload macOS artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: macos-build
         path: releases/
@@ -106,7 +106,7 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         fetch-depth: 0
     - name: Download all artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
     - name: Organize build files
       run: |
         # Create releases directory if it doesn't exist
@@ -148,7 +148,7 @@ jobs:
           echo "Build files committed to repository"
         fi
     - name: Upload organized artifacts for release
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: all-builds
         path: releases/
@@ -162,7 +162,7 @@ jobs:
       with:
         ref: main  # Get the latest main with committed builds
     - name: Download organized builds
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: all-builds
         path: releases/
